@@ -12,6 +12,7 @@ import '../../../../../core/utils/utils/utils.dart';
 import '../../../../../core/utils/validators/input_validators.dart';
 import '../../../../logic/cubits/auth/auth_cubit.dart';
 import '../../../../logic/cubits/auth/auth_state.dart';
+import '../../../controllers/auth_controller/sign_in_controller.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -21,51 +22,18 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late final SignInController controller;
 
-  bool _passwordObscureText = true;
-
-  final _emailFocusNode = FocusNode();
-  final _passwordFocusNode = FocusNode();
+  @override
+  void initState() {
+    super.initState();
+    controller = SignInController();
+  }
 
   @override
   void dispose() {
     super.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _emailFocusNode.dispose();
-    _passwordFocusNode.dispose();
-  }
-
-  void _onTapSignUp() {
-    getIt<AppRouter>().pushNamed(RoutesName.signUp);
-  }
-
-  Future<void> _onTapLogin() async {
-    FocusScope.of(context).unfocus();
-    if (_formKey.currentState!.validate()) {
-      try {
-        await getIt<AuthCubit>().signIn(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-        Utils.showSnackBar(context, message: AppStrings.loginSuccessful);
-      } catch (e) {
-        Utils.showSnackBar(context, message: e.toString());
-      }
-    }
-  }
-
-  void _onTapForgotPassword() {
-    //TODO Perform forgot password logic here
-  }
-
-  void _onTapShowPassword() {
-    setState(() {
-      _passwordObscureText = !_passwordObscureText;
-    });
+    controller.dispose();
   }
 
   @override
@@ -74,7 +42,10 @@ class _SignInScreenState extends State<SignInScreen> {
       bloc: getIt<AuthCubit>(),
       listener: (context, state) {
         if (state.status == AuthStatus.authenticated) {
-          getIt<AppRouter>().pushNamedAndRemoveUntil(RoutesName.home, (route) => false);
+          getIt<AppRouter>().pushNamedAndRemoveUntil(
+            RoutesName.home,
+            (route) => false,
+          );
         } else if (state.status == AuthStatus.error && state.error != null) {
           Utils.showSnackBar(context, message: state.error!);
         }
@@ -86,101 +57,36 @@ class _SignInScreenState extends State<SignInScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.verticalPadding * 3),
                 child: Form(
-                  key: _formKey,
+                  key: controller.formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.1),
                       Text(
                         AppStrings.welcome,
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.01),
                       Text(
                         AppStrings.signIntoContinue,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColor.greyColor,
-                        ),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColor.greyColor,),
                       ),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.05),
-                      TextFormField(
-                        controller: _emailController,
-                        focusNode: _emailFocusNode,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          hintText: AppStrings.email,
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
-                        validator: InputValidators.emailValidator,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
+                      _buildEmailField(),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.02),
-                      TextFormField(
-                        controller: _passwordController,
-                        focusNode: _passwordFocusNode,
-                        textInputAction: TextInputAction.done,
-                        obscureText: _passwordObscureText,
-                        decoration: InputDecoration(
-                          hintText: AppStrings.password,
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          suffixIcon: IconButton(
-                            onPressed: () => _onTapShowPassword(),
-                            icon:
-                                _passwordObscureText
-                                    ? const Icon(Icons.visibility)
-                                    : const Icon(Icons.visibility_off),
-                          ),
-                        ),
-                        validator: InputValidators.passwordValidator,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
+                      _buildPasswordField(),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.01),
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () => _onTapForgotPassword(),
+                          onPressed: () => controller.onTapForgotPassword(context),
                           child: Text(AppStrings.forgotPassword),
                         ),
                       ),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.02),
-                      Visibility(
-                        visible: state.status != AuthStatus.loading,
-                        replacement: Center(child: CircularProgressIndicator()),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: AppSpacing.screenHeight(context) * 0.06,
-                          child: ElevatedButton(
-                            onPressed: () => _onTapLogin(),
-                            child: const Text(AppStrings.login),
-                          ),
-                        ),
-                      ),
+                      _buildLoginButton(state),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.05),
-                      Center(
-                        child: RichText(
-                          text: TextSpan(
-                            text: AppStrings.dontHaveAccount,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(color: AppColor.greyColor),
-                            children: [
-                              TextSpan(
-                                text: AppStrings.signUp,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  color: AppColor.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = _onTapSignUp,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      _buildSignUpText(),
                     ],
                   ),
                 ),
@@ -189,6 +95,84 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEmailField() {
+    return TextFormField(
+      controller: controller.emailController,
+      focusNode: controller.emailFocusNode,
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
+      decoration: const InputDecoration(
+        hintText: AppStrings.email,
+        prefixIcon: Icon(Icons.email_outlined),
+      ),
+      validator: InputValidators.emailValidator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: controller.passwordController,
+      focusNode: controller.passwordFocusNode,
+      textInputAction: TextInputAction.done,
+      obscureText: controller.passwordObscureText,
+      decoration: InputDecoration(
+        hintText: AppStrings.password,
+        prefixIcon: const Icon(Icons.lock_outline),
+        suffixIcon: IconButton(
+          onPressed:
+              () => controller.togglePasswordVisibility(() => setState(() {})),
+          icon:
+              controller.passwordObscureText
+                  ? const Icon(Icons.visibility)
+                  : const Icon(Icons.visibility_off),
+        ),
+      ),
+      validator: InputValidators.passwordValidator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
+  }
+
+  Widget _buildLoginButton(AuthState state) {
+    return Visibility(
+      visible: state.status != AuthStatus.loading,
+      replacement: Center(child: CircularProgressIndicator()),
+      child: SizedBox(
+        width: double.infinity,
+        height: AppSpacing.screenHeight(context) * 0.06,
+        child: ElevatedButton(
+          onPressed: () => controller.onTapLogin(context),
+          child: const Text(AppStrings.login),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSignUpText() {
+    return Center(
+      child: RichText(
+        text: TextSpan(
+          text: AppStrings.dontHaveAccount,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: AppColor.greyColor),
+          children: [
+            TextSpan(
+              text: AppStrings.signUp,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppColor.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+              recognizer:
+                  TapGestureRecognizer()
+                    ..onTap = () => controller.onTapSignUp(context),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
