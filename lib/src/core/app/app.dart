@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:piechat/src/features/data/services/service_locator.dart';
 import '../routes/route_configs.dart';
 import '../routes/route_names.dart';
+import '../routes/router.dart';
 import '../utils/constants/strings.dart';
 import 'app_theme.dart';
 
@@ -20,6 +22,7 @@ class _PieChatState extends State<PieChat> {
       theme: AppTheme.lightTheme,
       initialRoute: RoutesName.splash,
       onGenerateRoute: RouteConfigs.generateRoute,
+      navigatorKey: getIt<AppRouter>().navigatorKey,
     );
   }
 }

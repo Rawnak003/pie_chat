@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:piechat/src/core/app/app_spacing.dart';
 import 'package:piechat/src/core/utils/constants/colors.dart';
 import 'package:piechat/src/core/utils/constants/strings.dart';
+import 'package:piechat/src/features/data/services/service_locator.dart';
 
+import '../../../../../core/routes/router.dart';
 import '../../../../../core/utils/validators/input_validators.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -43,14 +45,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _onTapSignIn() {
-    Navigator.pop(context);
+    getIt<AppRouter>().pop();
   }
 
   void _onTapSignUp() {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
       //TODO Perform sign up logic here
-      Navigator.pop(context);
+      getIt<AppRouter>().pop();
     }
   }
 

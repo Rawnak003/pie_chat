@@ -1,8 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:piechat/src/core/app/app_spacing.dart';
+import 'package:piechat/src/core/routes/router.dart';
 import 'package:piechat/src/core/utils/constants/colors.dart';
 import 'package:piechat/src/core/utils/constants/strings.dart';
+import 'package:piechat/src/features/data/services/service_locator.dart';
 
 import '../../../../../core/routes/route_names.dart';
 import '../../../../../core/utils/validators/input_validators.dart';
@@ -34,7 +36,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _onTapSignUp() {
-    Navigator.pushNamed(context, RoutesName.signUp);
+    getIt<AppRouter>().pushNamed(RoutesName.signUp);
   }
 
   void _onTapLogin() {
