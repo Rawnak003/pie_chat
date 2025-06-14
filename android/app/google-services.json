@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "36180162460",
+    "project_id": "piechat-d41a2",
+    "storage_bucket": "piechat-d41a2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:36180162460:android:7d94694c5bc322b5e1ba59",
+        "android_client_info": {
+          "package_name": "com.example.piechat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "YOUR_API_KEY",
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
