@@ -6,6 +6,7 @@ import 'package:piechat/src/core/utils/constants/colors.dart';
 import 'package:piechat/src/core/utils/constants/strings.dart';
 import 'package:piechat/src/features/data/services/service_locator.dart';
 import 'package:piechat/src/features/logic/cubits/auth/auth_cubit.dart';
+import 'package:piechat/src/features/presentation/controllers/auth_controller/sign_up_controller.dart';
 
 import '../../../../../core/routes/route_names.dart';
 import '../../../../../core/routes/router.dart';
@@ -21,70 +22,34 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _userNameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late final SignUpController controller;
 
-  final _emailFocusNode = FocusNode();
-  final _nameFocusNode = FocusNode();
-  final _userNameFocusNode = FocusNode();
-  final _phoneFocusNode = FocusNode();
-  final _passwordFocusNode = FocusNode();
+  @override
+  void initState() {
+    super.initState();
+    controller = SignUpController();
+  }
 
   @override
   void dispose() {
     super.dispose();
-    _emailController.dispose();
-    _nameController.dispose();
-    _userNameController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    _emailFocusNode.dispose();
-    _nameFocusNode.dispose();
-    _userNameFocusNode.dispose();
-    _phoneFocusNode.dispose();
-    _passwordFocusNode.dispose();
-  }
-
-  void _onTapSignIn() {
-    getIt<AppRouter>().pop();
-  }
-
-  Future<void> _onTapSignUp() async {
-    FocusScope.of(context).unfocus();
-    if (_formKey.currentState!.validate()) {
-      try {
-        await getIt<AuthCubit>().signUp(
-          email: _emailController.text,
-          fullName: _nameController.text,
-          username: _userNameController.text,
-          phoneNumber: _phoneController.text,
-          password: _passwordController.text,
-        );
-        Utils.showSnackBar(context, message: AppStrings.signUpSuccessful);
-      } catch (e) {
-        Utils.showSnackBar(context, message: e.toString());
-      }
-    }
+    controller.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
-        bloc: getIt<AuthCubit>(),
-        listener: (context, state) {
-          if (state.status == AuthStatus.authenticated) {
-            getIt<AppRouter>().pushNamedAndRemoveUntil(
-              RoutesName.home,
-              (route) => false,
-            );
-          } else if (state.status == AuthStatus.error && state.error != null) {
-            Utils.showSnackBar(context, message: state.error!);
-          }
-        },
+      bloc: getIt<AuthCubit>(),
+      listener: (context, state) {
+        if (state.status == AuthStatus.authenticated) {
+          getIt<AppRouter>().pushNamedAndRemoveUntil(
+            RoutesName.home,
+            (route) => false,
+          );
+        } else if (state.status == AuthStatus.error && state.error != null) {
+          Utils.showSnackBar(context, message: state.error!);
+        }
+      },
       builder: (context, state) {
         return Scaffold(
           body: SafeArea(
@@ -92,130 +57,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.verticalPadding * 3),
                 child: Form(
-                  key: _formKey,
+                  key: controller.formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.1),
                       Text(
                         AppStrings.createAccount,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.01),
                       Text(
                         AppStrings.signUpToContinue,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyLarge?.copyWith(color: AppColor.greyColor),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppColor.greyColor,
+                        ),
                       ),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.05),
-                      TextFormField(
-                        controller: _emailController,
-                        focusNode: _emailFocusNode,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          hintText: AppStrings.email,
-                          prefixIcon: Icon(Icons.email_outlined),
-                        ),
-                        validator: InputValidators.emailValidator,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
+                      _buildEmailField(),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.02),
-                      TextFormField(
-                        controller: _nameController,
-                        focusNode: _nameFocusNode,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          hintText: AppStrings.fullName,
-                          prefixIcon: Icon(Icons.perm_identity_outlined),
-                        ),
-                        validator:
-                            (value) => InputValidators.nameValidator(
-                              AppStrings.fullName,
-                              value,
-                            ),
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
+                      _buildNameField(),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.02),
-                      TextFormField(
-                        controller: _userNameController,
-                        focusNode: _userNameFocusNode,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          hintText: AppStrings.username,
-                          prefixIcon: Icon(Icons.alternate_email_outlined),
-                        ),
-                        validator:
-                            (value) => InputValidators.nameValidator(
-                              AppStrings.username,
-                              value,
-                            ),
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
+                      _buildUsernameField(),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.02),
-                      TextFormField(
-                        controller: _phoneController,
-                        focusNode: _phoneFocusNode,
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          hintText: AppStrings.phone,
-                          prefixIcon: Icon(Icons.phone_outlined),
-                        ),
-                        validator: InputValidators.phoneValidator,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
+                      _buildPhoneField(),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.02),
-                      TextFormField(
-                        controller: _passwordController,
-                        focusNode: _passwordFocusNode,
-                        textInputAction: TextInputAction.done,
-                        decoration: const InputDecoration(
-                          hintText: AppStrings.password,
-                          prefixIcon: Icon(Icons.lock_outline),
-                        ),
-                        validator: InputValidators.passwordValidator,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                      ),
+                      _buildPasswordField(),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.03),
-                      Visibility(
-                        visible: state.status != AuthStatus.loading,
-                        replacement: Center(child: CircularProgressIndicator()),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () => _onTapSignUp(),
-                            child: const Text(AppStrings.signUp),
-                          ),
-                        ),
-                      ),
+                      _buildSignUpButton(state),
                       SizedBox(height: AppSpacing.screenHeight(context) * 0.05),
-                      Center(
-                        child: RichText(
-                          text: TextSpan(
-                            text: AppStrings.alreadyHaveAccount,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColor.greyColor,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: AppStrings.signIn,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  color: AppColor.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                recognizer:
-                                    TapGestureRecognizer()..onTap = _onTapSignIn,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      _buildSignInText(),
                     ],
                   ),
                 ),
@@ -223,7 +95,120 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
         );
-      }
+      },
+    );
+  }
+
+  Widget _buildSignInText() {
+    return Center(
+      child: RichText(
+        text: TextSpan(
+          text: AppStrings.alreadyHaveAccount,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: AppColor.greyColor),
+          children: [
+            TextSpan(
+              text: AppStrings.signIn,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppColor.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+              recognizer:
+                  TapGestureRecognizer()
+                    ..onTap = () => controller.onTapSignIn(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSignUpButton(AuthState state) {
+    return Visibility(
+      visible: state.status != AuthStatus.loading,
+      replacement: Center(child: CircularProgressIndicator()),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => controller.onTapSignUp(context),
+          child: const Text(AppStrings.signUp),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: controller.passwordController,
+      focusNode: controller.passwordFocusNode,
+      textInputAction: TextInputAction.done,
+      decoration: const InputDecoration(
+        hintText: AppStrings.password,
+        prefixIcon: Icon(Icons.lock_outline),
+      ),
+      validator: InputValidators.passwordValidator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return TextFormField(
+      controller: controller.phoneController,
+      focusNode: controller.phoneFocusNode,
+      keyboardType: TextInputType.phone,
+      textInputAction: TextInputAction.next,
+      decoration: const InputDecoration(
+        hintText: AppStrings.phone,
+        prefixIcon: Icon(Icons.phone_outlined),
+      ),
+      validator: InputValidators.phoneValidator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
+  }
+
+  Widget _buildUsernameField() {
+    return TextFormField(
+      controller: controller.userNameController,
+      focusNode: controller.userNameFocusNode,
+      textInputAction: TextInputAction.next,
+      decoration: const InputDecoration(
+        hintText: AppStrings.username,
+        prefixIcon: Icon(Icons.alternate_email_outlined),
+      ),
+      validator:
+          (value) => InputValidators.nameValidator(AppStrings.username, value),
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
+  }
+
+  Widget _buildNameField() {
+    return TextFormField(
+      controller: controller.nameController,
+      focusNode: controller.nameFocusNode,
+      textInputAction: TextInputAction.next,
+      decoration: const InputDecoration(
+        hintText: AppStrings.fullName,
+        prefixIcon: Icon(Icons.perm_identity_outlined),
+      ),
+      validator:
+          (value) => InputValidators.nameValidator(AppStrings.fullName, value),
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
+  }
+
+  Widget _buildEmailField() {
+    return TextFormField(
+      controller: controller.emailController,
+      focusNode: controller.emailFocusNode,
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
+      decoration: const InputDecoration(
+        hintText: AppStrings.email,
+        prefixIcon: Icon(Icons.email_outlined),
+      ),
+      validator: InputValidators.emailValidator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
     );
   }
 }

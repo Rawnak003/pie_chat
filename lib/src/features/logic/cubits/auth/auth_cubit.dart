@@ -6,7 +6,7 @@ import '../../../data/repositories/auth_repository.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
-  StreamSubscription<User?>? _authStateSubscription;
+  StreamSubscription<User?>? authStateSubscription;
 
   AuthCubit({required AuthRepository authRepository})
     : _authRepository = authRepository,
@@ -16,8 +16,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   void _init() {
     emit(state.copyWith(status: AuthStatus.initial));
-    _authStateSubscription = _authRepository.authStateChanges.listen((
-      user,
+    authStateSubscription = _authRepository.authStateChanges.listen((user,
     ) async {
       if (user != null) {
         try {
