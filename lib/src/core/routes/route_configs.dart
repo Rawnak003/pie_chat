@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:piechat/src/features/presentation/screens/authentication/sign_in/sign_in_screen.dart';
 import '../../features/presentation/screens/splash/splash_screen.dart';
 import 'route_names.dart';
 
@@ -8,6 +9,10 @@ class RouteConfigs {
       case RoutesName.splash:
         return MaterialPageRoute(
           builder: (context) => const SplashScreen(),
+        );
+      case RoutesName.signIn:
+        return MaterialPageRoute(
+          builder: (context) => const SignInScreen(),
         );
 
       default:

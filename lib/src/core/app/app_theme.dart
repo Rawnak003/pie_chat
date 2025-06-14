@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:piechat/src/core/app/app_spacing.dart';
+import 'package:piechat/src/core/utils/constants/colors.dart';
 
 class AppTheme {
   // Define the primary color
@@ -37,8 +39,8 @@ class AppTheme {
       filled: true,
       fillColor: primaryColor.withOpacity(0.1),
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
+        horizontal: AppSpacing.horizontalPadding,
+        vertical: AppSpacing.verticalPadding,
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
@@ -53,7 +55,7 @@ class AppTheme {
         borderSide: const BorderSide(color: primaryColor),
       ),
       hintStyle: TextStyle(
-        color: Colors.grey[600],
+        color: Colors.grey.shade600,
         fontSize: 14,
       ),
     ),
@@ -98,7 +100,7 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
-        foregroundColor: Colors.black87,
+        foregroundColor: AppColor.whiteColor,
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
@@ -106,6 +108,7 @@ class AppTheme {
         ),
         textStyle: const TextStyle(
           fontSize: 16,
+          color: AppColor.whiteColor,
           fontWeight: FontWeight.w600,
         ),
       ),
