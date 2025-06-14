@@ -4,6 +4,8 @@ import 'package:piechat/src/core/app/app_spacing.dart';
 import 'package:piechat/src/core/utils/constants/colors.dart';
 import 'package:piechat/src/core/utils/constants/strings.dart';
 
+import '../../../../../core/utils/validators/input_validators.dart';
+
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
@@ -37,16 +39,12 @@ class _SignInScreenState extends State<SignInScreen> {
                   SizedBox(height: AppSpacing.screenHeight(context) * 0.1),
                   Text(
                     AppStrings.welcome,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold,),
                   ),
                   SizedBox(height: AppSpacing.screenHeight(context) * 0.01),
                   Text(
                     AppStrings.signIntoContinue,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: AppColor.greyColor),
+                    style: Theme.of(context,).textTheme.bodyLarge?.copyWith(color: AppColor.greyColor),
                   ),
                   SizedBox(height: AppSpacing.screenHeight(context) * 0.05),
                   TextFormField(
@@ -55,6 +53,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       hintText: AppStrings.email,
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
+                    validator: InputValidators.emailValidator,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   SizedBox(height: AppSpacing.screenHeight(context) * 0.02),
                   TextFormField(
@@ -65,6 +65,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       prefixIcon: Icon(Icons.lock_outline),
                       suffixIcon: Icon(Icons.visibility),
                     ),
+                    validator: InputValidators.passwordValidator,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   SizedBox(height: AppSpacing.screenHeight(context) * 0.01),
                   Align(
