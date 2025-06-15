@@ -77,6 +77,11 @@ class AppTheme {
 
     // Text Themes
     textTheme: const TextTheme(
+      headlineSmall: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+      ),
       titleLarge: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,

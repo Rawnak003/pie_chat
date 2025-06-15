@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../../../../../core/routes/route_names.dart';
-import '../../../../../core/routes/router.dart';
-import '../../../../data/services/service_locator.dart';
-import '../../../../logic/cubits/auth/auth_cubit.dart';
+import 'package:piechat/src/core/utils/constants/colors.dart';
+import '../../../controllers/user_controller/home_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,22 +10,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final HomeController controller = HomeController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Chats"),
+        title: Text("Chats", style: Theme.of(context).textTheme.headlineSmall),
         actions: [
-          InkWell(
-            onTap: () async {
-              await getIt<AuthCubit>().signOut();
-              getIt<AppRouter>().pushNamedAndRemoveUntil(RoutesName.signIn, (route) => false);
-            },
-            child: const Icon(
-              Icons.logout,
-            ),
-          )
+          IconButton(
+            onPressed: () => controller.onTapLogout(context),
+            icon: Icon(Icons.logout_outlined),
+          ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => controller.showContactsList(context),
+        child: Icon(Icons.message, color: AppColor.whiteColor),
       ),
       body: Center(child: Text('Home Screen')),
     );

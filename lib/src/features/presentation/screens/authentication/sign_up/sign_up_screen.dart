@@ -22,13 +22,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  late final SignUpController controller;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = SignUpController();
-  }
+  final SignUpController controller = SignUpController();
 
   @override
   void dispose() {
