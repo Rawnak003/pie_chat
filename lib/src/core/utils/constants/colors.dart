@@ -4,8 +4,8 @@ class AppColor{
   static const Color themeColor = Color(0xFF07ADAE);
   static const Color lightThemeColor = Color(0xFF65C4C8);
   static const Color primaryColor = Color(0xff692960);
-  static const Color secondaryColor = Color(0xFF43BEC2);
-  static const Color itemBGColor = Color(0xFFCDEFEF);
+  static const Color secondaryColor = Color(0xFFEEE7ED);
+  static const Color avatarBGColor = Color(0xFFB393AE);
   static const Color categoryBGColor = Color(0xFFDAF3F3);
   static const Color whiteColor = Color(0xFFFFFFFF);
   static const Color blackColor = Color(0xFF000000);

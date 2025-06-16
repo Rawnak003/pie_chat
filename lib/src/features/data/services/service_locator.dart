@@ -10,6 +10,9 @@ import 'package:piechat/src/core/routes/router.dart';
 import 'package:piechat/src/features/data/repositories/auth_repository.dart';
 import 'package:piechat/src/features/data/repositories/contact_repository.dart';
 import 'package:piechat/src/features/logic/cubits/auth/auth_cubit.dart';
+import 'package:piechat/src/features/logic/cubits/chats/chat_cubit.dart';
+
+import '../repositories/chat_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -31,4 +34,5 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
   getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
   getIt.registerLazySingleton(() => AuthCubit(authRepository: AuthRepository()));
+  getIt.registerLazySingleton(() => ChatCubit(chatRepository: ChatRepository(), currentUserId: getIt<FirebaseAuth>().currentUser!.uid));
 }

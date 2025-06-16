@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:piechat/src/core/utils/constants/colors.dart';
 
 import '../../../../core/routes/route_names.dart';
 import '../../../../core/routes/router.dart';
@@ -49,13 +50,11 @@ class HomeController {
                         final contact = contacts[index];
                         return ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).primaryColor.withOpacity(0.1),
+                            backgroundColor: AppColor.secondaryColor,
                             child: Text(contact["name"][0].toUpperCase()),
                           ),
                           title: Text(contact["name"]),
-                          onTap: () {},
+                          onTap: () => _navigateToChatScreen(context, contact["id"], contact["name"]),
                         );
                       },
                     );
@@ -65,6 +64,16 @@ class HomeController {
             ],
           ),
         );
+      },
+    );
+  }
+
+  void _navigateToChatScreen(BuildContext context, String receiverId, String receiverName) {
+    getIt<AppRouter>().pushNamed(
+      RoutesName.chatMessage,
+      arguments: {
+        'receiverId': receiverId,
+        'receiverName': receiverName,
       },
     );
   }

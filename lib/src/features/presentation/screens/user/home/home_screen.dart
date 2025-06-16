@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:piechat/src/core/utils/constants/colors.dart';
+import 'package:piechat/src/core/utils/constants/strings.dart';
 import '../../../controllers/user_controller/home_controller.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Chats", style: Theme.of(context).textTheme.headlineSmall),
+        title: Text(AppStrings.chats),
         actions: [
           IconButton(
             onPressed: () => controller.onTapLogout(context),

@@ -20,4 +20,6 @@ class AppStrings {
   static const String alreadyHaveAccount = 'Already have an account? ';
   static const String signIn = 'Sign In';
 
+  static const String chats = 'Chats';
+
 }
