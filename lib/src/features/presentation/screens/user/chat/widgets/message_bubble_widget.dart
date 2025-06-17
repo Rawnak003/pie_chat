@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:piechat/src/core/app/app_spacing.dart';
 import 'package:piechat/src/core/utils/constants/colors.dart';
 import 'package:piechat/src/features/data/models/chat_message_model.dart';
@@ -34,7 +35,8 @@ class MessageBubbleWidget extends StatelessWidget {
           bottom: AppSpacing.verticalPadding,
         ),
         child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
               message.content,
@@ -44,14 +46,18 @@ class MessageBubbleWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '3:00 PM',
+                  DateFormat('hh:mm a').format(message.timestamp.toDate()),
                   style: TextStyle(color: isMe ? Colors.white : Colors.black),
                 ),
-                Icon(
-                  Icons.done_all,
-                  color: message.status == MessageStatus.read ? isMe ? AppColor.blueColor : AppColor.transparentColor : isMe ? Colors.white : AppColor.transparentColor,
-                  size: 16,
-                ),
+                if (isMe)
+                  Icon(
+                    Icons.done_all,
+                    color:
+                        message.status == MessageStatus.read
+                            ? AppColor.blueColor
+                            : AppColor.whiteColor,
+                    size: 14,
+                  ),
               ],
             ),
           ],

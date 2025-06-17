@@ -7,6 +7,8 @@ class ChatController {
   final TextEditingController messageController = TextEditingController();
   final ChatCubit chatCubit = getIt<ChatCubit>();
 
+  bool isTyping = false;
+
   Future<void> handleSendMessage(String receiverId) async {
     await chatCubit.sendMessage(
       content: messageController.text.trim(),
@@ -28,6 +30,15 @@ class ChatController {
       return chat.participantsName?[otherUserId] ?? "Unknown User";
     } catch (e) {
       return "Unknown User";
+    }
+  }
+
+  void onTextChanged(VoidCallback updateState) {
+    final isComposing = messageController.text.trim().isNotEmpty;
+    if (isTyping != isComposing) {
+      isTyping = isComposing;
+      updateState();
+      chatCubit.startTyping();
     }
   }
 }

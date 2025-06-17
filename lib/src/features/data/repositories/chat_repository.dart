@@ -155,4 +155,54 @@ class ChatRepository extends BaseRepository {
       }
     }
   }
+
+  Stream<Map<String, dynamic>> getUserOnlineStatus(String userId) {
+    return firestore.collection('users').doc(userId).snapshots().map((snapshot) {
+      final data = snapshot.data();
+      return {
+        'isOnline': data?['isOnline'] ?? false,
+        'lastSeen': data?['lastSeen'],
+      };
+    });
+  }
+
+  Future<void> updateOnlineStatus(String userId, bool isOnline) async {
+    await firestore.collection('users').doc(userId).update({
+      'isOnline': isOnline,
+      'lastSeen': Timestamp.now(),
+    });
+  }
+
+  Stream<Map<String, dynamic>> getTypingStatus(String chatRoomId) {
+    return chatRooms.doc(chatRoomId).snapshots().map((snapshot) {
+      if(!snapshot.exists){
+        return {
+          'isTyping': false,
+          'typingUserId': null,
+        };
+      }
+      final data = snapshot.data() as Map<String, dynamic>;
+      return {
+        'isTyping': data['isTyping'] ?? false,
+        'typingUserId': data['typingUserId'],
+      };
+    });
+  }
+
+  Future<void> updateTypingStatus(String chatRoomId, String userId, bool isTyping) async {
+    try {
+      final doc = await chatRooms.doc(chatRoomId).get();
+      if(!doc.exists){
+        return;
+      }
+      await chatRooms.doc(chatRoomId).update({
+        'isTyping': isTyping,
+        'typingUserId': isTyping ? userId : null,
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+    }
+  }
 }

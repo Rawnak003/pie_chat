@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:piechat/src/core/app/app_spacing.dart';
 import 'package:piechat/src/core/utils/constants/colors.dart';
 import 'package:piechat/src/features/logic/cubits/chats/chat_cubit.dart';
@@ -24,6 +25,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
   void initState() {
     super.initState();
     chatController.chatCubit.enterChat(widget.receiverId);
+    chatController.messageController.addListener(() => chatController.onTextChanged(() => setState(() {})));
   }
 
   @override
@@ -48,7 +50,21 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(widget.receiverName),
-                const Text('Last seen at 12:00', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                BlocBuilder<ChatCubit, ChatState>(
+                    bloc: chatController.chatCubit,
+                    builder: (context, state) {
+                      if (state.isReceiverTyping) {
+                        return Text('Typing...', style: TextStyle(fontSize: 12, color: AppColor.primaryColor));
+                      }
+                      if (state.isReceiverOnline) {
+                        return Text('Online', style: TextStyle(fontSize: 12, color: AppColor.greenColor));
+                      }
+                      if (state.receiverLastSeen != null) {
+                        final lastSeen = state.receiverLastSeen!.toDate();
+                        return Text('Last seen at ${DateFormat('hh:mm a').format(lastSeen)}', style: TextStyle(fontSize: 12, color: AppColor.greyColor));
+                      }
+                      return const SizedBox.shrink();
+                    }),
               ],
             ),
           ],

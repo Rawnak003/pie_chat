@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:piechat/src/features/data/repositories/chat_repository.dart';
 import 'package:piechat/src/features/logic/cubits/chats/chat_state.dart';
@@ -8,7 +9,10 @@ class ChatCubit extends Cubit<ChatState> {
   final ChatRepository _chatRepository;
   final String currentUserId;
   StreamSubscription? _messagesSubscription;
+  StreamSubscription? _onlineStatusSubscription;
+  StreamSubscription? _typingSubscription;
   bool _isInChat = false;
+  Timer? typingTimer;
 
   ChatCubit({
     required ChatRepository chatRepository,
@@ -20,15 +24,31 @@ class ChatCubit extends Cubit<ChatState> {
     _isInChat = true;
     emit(state.copyWith(status: ChatStatus.loading));
     try {
-      final chatRoom = await _chatRepository.getOrCreateChatRoom(currentUserId, receiverId);
-      emit(state.copyWith(status: ChatStatus.loaded, chatRoomId: chatRoom.id, receiverId: receiverId));
+      final chatRoom = await _chatRepository.getOrCreateChatRoom(
+        currentUserId,
+        receiverId,
+      );
+      emit(
+        state.copyWith(
+          status: ChatStatus.loaded,
+          chatRoomId: chatRoom.id,
+          receiverId: receiverId,
+        ),
+      );
       subscribeToMessages(chatRoom.id);
+      _subscribeToOnlineStatus(receiverId);
+      _subscribeToTypingStatus(chatRoom.id);
+
+      await _chatRepository.updateOnlineStatus(currentUserId, true);
     } catch (e) {
       emit(state.copyWith(status: ChatStatus.error, error: e.toString()));
     }
   }
 
-  Future<void> sendMessage({required String content, required String receiverId}) async {
+  Future<void> sendMessage({
+    required String content,
+    required String receiverId,
+  }) async {
     if (state.chatRoomId == null) return;
     try {
       await _chatRepository.sendMessage(
@@ -44,14 +64,21 @@ class ChatCubit extends Cubit<ChatState> {
 
   void subscribeToMessages(String chatRoomId) {
     _messagesSubscription?.cancel();
-    _messagesSubscription = _chatRepository.getMessages(chatRoomId).listen((messages) {
-      if (_isInChat) {
-        _markMessagesAsRead(chatRoomId);
-      }
-      emit(state.copyWith(messages: messages, error: null));
-    }, onError: (error) {
-      emit(state.copyWith(status: ChatStatus.error, error: error.toString()));
-    });
+    _messagesSubscription = _chatRepository
+        .getMessages(chatRoomId)
+        .listen(
+          (messages) {
+            if (_isInChat) {
+              _markMessagesAsRead(chatRoomId);
+            }
+            emit(state.copyWith(messages: messages, error: null));
+          },
+          onError: (error) {
+            emit(
+              state.copyWith(status: ChatStatus.error, error: error.toString()),
+            );
+          },
+        );
   }
 
   Future<void> _markMessagesAsRead(String chatRoomId) async {
@@ -64,5 +91,66 @@ class ChatCubit extends Cubit<ChatState> {
 
   Future<void> leaveChat() async {
     _isInChat = false;
+  }
+
+  void _subscribeToOnlineStatus(String userId) {
+    _onlineStatusSubscription?.cancel();
+    _onlineStatusSubscription = _chatRepository
+        .getUserOnlineStatus(userId)
+        .listen((status) {
+          final isOnline = status['isOnline'] as bool;
+          final lastSeen = status['lastSeen'] as Timestamp;
+          emit(
+            state.copyWith(
+              isReceiverOnline: isOnline,
+              receiverLastSeen: lastSeen,
+            ),
+          );
+        },
+      onError: (error) {
+        emit(
+          state.copyWith(status: ChatStatus.error, error: error.toString()),
+        );
+      },
+    );
+  }
+
+  void _subscribeToTypingStatus(String chatRoomId) {
+    _typingSubscription?.cancel();
+    _typingSubscription = _chatRepository
+        .getTypingStatus(chatRoomId)
+        .listen((status) {
+      final isTyping = status['isTyping'] as bool;
+      final typingUserId = status['typingUserId'] as String?;
+      emit(
+        state.copyWith(
+          isReceiverTyping: isTyping && typingUserId != currentUserId,
+        ),
+      );
+    },
+      onError: (error) {
+        emit(
+          state.copyWith(status: ChatStatus.error, error: error.toString()),
+        );
+      },
+    );
+  }
+
+  void startTyping() {
+    if (state.chatRoomId == null) return;
+    typingTimer?.cancel();
+    updateTypingStatus(true);
+    typingTimer = Timer(const Duration(seconds: 3), () {
+      updateTypingStatus(false);
+    });
+  }
+
+  Future<void> updateTypingStatus(bool isTyping) async {
+    if (state.chatRoomId == null) return;
+    try {
+      await _chatRepository.updateTypingStatus(state.chatRoomId!, currentUserId, isTyping);
+    } catch (e) {
+      emit(state.copyWith(status: ChatStatus.error, error: e.toString()));
+    }
   }
 }
