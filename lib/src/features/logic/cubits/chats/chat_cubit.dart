@@ -193,4 +193,21 @@ class ChatCubit extends Cubit<ChatState> {
       emit(state.copyWith(status: ChatStatus.error, error: error.toString()));
     });
   }
+
+  Future<void> loadMoreMessages() async {
+    if (state.status != ChatStatus.loaded || state.messages.isEmpty || !state.hasMoreMessages || state.isLoadingMore) return;
+    try {
+      emit(state.copyWith(isLoadingMore: true));
+      final lastMessages = state.messages.last;
+      final lastDoc = await _chatRepository.getChatRoomMessages(state.chatRoomId!).doc(lastMessages.id).get();
+      final moreMessages = await _chatRepository.getMoreMessages(state.chatRoomId!, lastDocument: lastDoc);
+      if (moreMessages.isEmpty) {
+        emit(state.copyWith(hasMoreMessages: false, isLoadingMore: false));
+        return;
+      }
+      emit(state.copyWith(messages: [...state.messages, ...moreMessages],hasMoreMessages: moreMessages.length >= 20, isLoadingMore: false));
+    } catch (e) {
+      emit(state.copyWith(status: ChatStatus.error, error: e.toString(), isLoadingMore: false));
+    }
+  }
 }

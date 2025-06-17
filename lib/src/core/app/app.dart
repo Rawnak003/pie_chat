@@ -31,13 +31,18 @@ class _PieChatState extends State<PieChat> {
   }
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppStrings.appName,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      initialRoute: RoutesName.splash,
-      onGenerateRoute: RouteConfigs.generateRoute,
-      navigatorKey: getIt<AppRouter>().navigatorKey,
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: MaterialApp(
+        title: AppStrings.appName,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        initialRoute: RoutesName.splash,
+        onGenerateRoute: RouteConfigs.generateRoute,
+        navigatorKey: getIt<AppRouter>().navigatorKey,
+      ),
     );
   }
 }

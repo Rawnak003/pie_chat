@@ -30,6 +30,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
   void initState() {
     super.initState();
     chatController.chatCubit.enterChat(widget.receiverId);
+    chatController.scrollController.addListener(chatController.onScrollToLoad);
     chatController.messageController.addListener(
       () => chatController.onTextChanged(() => setState(() {})),
     );
@@ -150,7 +151,10 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
         ],
       ),
       body: SafeArea(
-        child: BlocBuilder<ChatCubit, ChatState>(
+        child: BlocConsumer<ChatCubit, ChatState>(
+          listener: (context, state) {
+            chatController.hasNewMessages(state.messages);
+          },
           bloc: chatController.chatCubit,
           builder: (context, state) {
             if (state.status == ChatStatus.loading) {
@@ -164,6 +168,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
               children: [
                 Expanded(
                   child: ListView.builder(
+                    controller: chatController.scrollController,
                     reverse: true,
                     itemCount: state.messages.length,
                     itemBuilder: (context, index) {
