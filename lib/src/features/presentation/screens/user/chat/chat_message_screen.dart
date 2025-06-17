@@ -7,9 +7,14 @@ import 'package:piechat/src/features/logic/cubits/chats/chat_cubit.dart';
 import 'package:piechat/src/features/logic/cubits/chats/chat_state.dart';
 import 'package:piechat/src/features/presentation/controllers/user_controller/chat_controller.dart';
 import 'package:piechat/src/features/presentation/screens/user/chat/widgets/message_bubble_widget.dart';
+import 'package:piechat/src/features/presentation/screens/user/chat/widgets/send_message_field_widget.dart';
 
 class ChatMessageScreen extends StatefulWidget {
-  const ChatMessageScreen({super.key, required this.receiverId, required this.receiverName});
+  const ChatMessageScreen({
+    super.key,
+    required this.receiverId,
+    required this.receiverName,
+  });
 
   final String receiverId;
   final String receiverName;
@@ -25,7 +30,9 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
   void initState() {
     super.initState();
     chatController.chatCubit.enterChat(widget.receiverId);
-    chatController.messageController.addListener(() => chatController.onTextChanged(() => setState(() {})));
+    chatController.messageController.addListener(
+      () => chatController.onTextChanged(() => setState(() {})),
+    );
   }
 
   @override
@@ -51,28 +58,94 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
               children: [
                 Text(widget.receiverName),
                 BlocBuilder<ChatCubit, ChatState>(
-                    bloc: chatController.chatCubit,
-                    builder: (context, state) {
-                      if (state.isReceiverTyping) {
-                        return Text('Typing...', style: TextStyle(fontSize: 12, color: AppColor.primaryColor));
-                      }
-                      if (state.isReceiverOnline) {
-                        return Text('Online', style: TextStyle(fontSize: 12, color: AppColor.greenColor));
-                      }
-                      if (state.receiverLastSeen != null) {
-                        final lastSeen = state.receiverLastSeen!.toDate();
-                        return Text('Last seen at ${DateFormat('hh:mm a').format(lastSeen)}', style: TextStyle(fontSize: 12, color: AppColor.greyColor));
-                      }
-                      return const SizedBox.shrink();
-                    }),
+                  bloc: chatController.chatCubit,
+                  builder: (context, state) {
+                    if (state.isReceiverTyping) {
+                      return Text(
+                        'Typing...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColor.primaryColor,
+                        ),
+                      );
+                    }
+                    if (state.isReceiverOnline) {
+                      return Text(
+                        'Online',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColor.greenColor,
+                        ),
+                      );
+                    }
+                    if (state.receiverLastSeen != null) {
+                      final lastSeen = state.receiverLastSeen!.toDate();
+                      return Text(
+                        'Last seen at ${DateFormat('hh:mm a').format(lastSeen)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColor.greyColor,
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ],
             ),
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.more_vert),
+          BlocBuilder<ChatCubit, ChatState>(
+            bloc: chatController.chatCubit,
+            builder: (context, state) {
+              if (state.isUserBlocked) {
+                return TextButton.icon(
+                  onPressed:
+                      () => chatController.chatCubit.unBlockUser(
+                        widget.receiverId,
+                      ),
+                  label: Text('Unblock'),
+                );
+              }
+              return PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert),
+                onSelected: (value) async {
+                  if (value == 'block') {
+                    final bool? confirmation = await showDialog<bool>(
+                      context: context,
+                      builder:
+                          (context) => AlertDialog(
+                            title: Text('Block ${widget.receiverName}?'),
+                            content: Text(
+                              'Are you sure you want to block this user?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: Text('Block'),
+                              ),
+                            ],
+                          ),
+                    );
+                    if (confirmation == true) {
+                      chatController.chatCubit.blockUser(widget.receiverId);
+                    }
+                  }
+                },
+                itemBuilder:
+                    (context) => <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'block',
+                        child: Text('Block'),
+                      ),
+                    ],
+              );
+            },
           ),
         ],
       ),
@@ -86,6 +159,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
             if (state.status == ChatStatus.error) {
               return Center(child: Text(state.error ?? 'Something went wrong'));
             }
+            final isBlocked = state.amIBlocked;
             return Column(
               children: [
                 Expanded(
@@ -94,49 +168,30 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                     itemCount: state.messages.length,
                     itemBuilder: (context, index) {
                       final message = state.messages[index];
-                      final isMe = message.senderId == chatController.chatCubit.currentUserId;
-                      return MessageBubbleWidget(
-                        message: message,
-                        isMe: isMe,
-                      );
+                      final isMe =
+                          message.senderId ==
+                          chatController.chatCubit.currentUserId;
+                      return MessageBubbleWidget(message: message, isMe: isMe);
                     },
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.verticalPadding),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.emoji_emotions, color: AppColor.primaryColor),
+                isBlocked
+                    ? Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'You are blocked by ${widget.receiverName}.',
                       ),
-                      Expanded(
-                        child: TextField(
-                          controller: chatController.messageController,
-                          keyboardType: TextInputType.multiline,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            hintText: 'Type a message...',
-                            fillColor: Colors.grey[200],
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.send),
-                              onPressed: () => chatController.handleSendMessage(widget.receiverId),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    )
+                    : SendMessageField(
+                      chatController: chatController,
+                      receiverId: widget.receiverId,
+                    ),
               ],
             );
-          }
+          },
         ),
-      )
+      ),
     );
   }
 }

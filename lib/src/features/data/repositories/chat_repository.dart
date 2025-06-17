@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:piechat/src/features/data/models/chat_room_model.dart';
+import 'package:piechat/src/features/data/models/user_model.dart';
 import 'package:piechat/src/features/data/services/base_repository.dart';
 
 import '../models/chat_message_model.dart';
@@ -204,5 +205,28 @@ class ChatRepository extends BaseRepository {
         print(e);
       }
     }
+  }
+
+  Future<void> blockUser(String currentUserId, String blockedUserId) async {
+    final userRef = firestore.collection('users').doc(currentUserId);
+    await userRef.update({'blockedUsers': FieldValue.arrayUnion([blockedUserId])});
+  }
+
+  Future<void> unBlockUser(String currentUserId, String blockedUserId) async {
+    final userRef = firestore.collection('users').doc(currentUserId);
+    await userRef.update({'blockedUsers': FieldValue.arrayRemove([blockedUserId])});
+  }
+
+  Stream<bool> isUserBlocked(String currentUserId, String otherUserId) {
+    return firestore.collection('users').doc(currentUserId).snapshots().map((snapshot) {
+      final userData = UserModel.fromFirestore(snapshot);
+      return userData.blockedUsers.contains(otherUserId);
+    });
+  }
+  Stream<bool> isCurrentUserBlocked(String currentUserId, String otherUserId) {
+    return firestore.collection('users').doc(otherUserId).snapshots().map((snapshot) {
+      final userData = UserModel.fromFirestore(snapshot);
+      return userData.blockedUsers.contains(currentUserId);
+    });
   }
 }
