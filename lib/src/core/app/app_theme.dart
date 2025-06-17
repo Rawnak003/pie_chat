@@ -5,6 +5,7 @@ import 'package:piechat/src/core/utils/constants/colors.dart';
 class AppTheme {
   // Define the primary color
   static const primaryColor = Color(0xff692960);
+  static const secondaryColor = Color(0xFFEEE7ED);
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
@@ -13,7 +14,7 @@ class AppTheme {
     // Colors
     colorScheme: const ColorScheme.light(
       primary: primaryColor,
-      secondary: Color(0xFF8E8E93),
+      secondary: secondaryColor,
       surface: Colors.white,
       onSurface: Colors.black,
       tertiary: Color(0xFF7CBEC2),
@@ -28,8 +29,8 @@ class AppTheme {
       centerTitle: false,
       titleTextStyle: TextStyle(
         color: Colors.black,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
       ),
       iconTheme: IconThemeData(color: Colors.black),
     ),
@@ -37,7 +38,7 @@ class AppTheme {
     // Input Decoration
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: primaryColor.withOpacity(0.1),
+      fillColor: AppColor.secondaryColor,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.horizontalPadding,
         vertical: AppSpacing.verticalPadding,
@@ -62,7 +63,7 @@ class AppTheme {
 
     // Message Bubbles
     cardTheme: CardTheme(
-      color: primaryColor.withOpacity(0.1),
+      color: AppColor.secondaryColor,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -77,6 +78,11 @@ class AppTheme {
 
     // Text Themes
     textTheme: const TextTheme(
+      headlineSmall: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+      ),
       titleLarge: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
