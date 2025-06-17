@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:piechat/src/core/app/app_spacing.dart';
 import 'package:piechat/src/core/utils/constants/colors.dart';
-import 'package:piechat/src/features/data/models/chat_message_model.dart';
-import 'package:piechat/src/features/data/services/service_locator.dart';
 import 'package:piechat/src/features/logic/cubits/chats/chat_cubit.dart';
+import 'package:piechat/src/features/logic/cubits/chats/chat_state.dart';
+import 'package:piechat/src/features/presentation/controllers/user_controller/chat_controller.dart';
 import 'package:piechat/src/features/presentation/screens/user/chat/widgets/message_bubble_widget.dart';
 
 class ChatMessageScreen extends StatefulWidget {
@@ -18,113 +18,109 @@ class ChatMessageScreen extends StatefulWidget {
 }
 
 class _ChatMessageScreenState extends State<ChatMessageScreen> {
-  final TextEditingController _messageController = TextEditingController();
-  final ChatCubit _chatCubit = getIt<ChatCubit>();
+  final ChatController chatController = ChatController();
 
   @override
   void initState() {
     super.initState();
-    _chatCubit.enterChat(widget.receiverId);
-  }
-
-  Future<void> _handleSendMessage() async {
-    await _chatCubit.sendMessage(
-      content: _messageController.text.trim(),
-      receiverId: widget.receiverId,
-    );
-    _messageController.clear();
+    chatController.chatCubit.enterChat(widget.receiverId);
   }
 
   @override
   void dispose() {
-    _messageController.dispose();
     super.dispose();
+    chatController.dispose();
+    chatController.chatCubit.leaveChat();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColor.avatarBGColor,
-                child: Text(widget.receiverName[0].toUpperCase()),
-              ),
-              const SizedBox(width: AppSpacing.horizontalPadding),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(widget.receiverName),
-                  const Text('Last seen at 12:00', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.more_vert),
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: AppColor.avatarBGColor,
+              child: Text(widget.receiverName[0].toUpperCase()),
+            ),
+            const SizedBox(width: AppSpacing.horizontalPadding),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.receiverName),
+                const Text('Last seen at 12:00', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
             ),
           ],
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: 10,
-                itemBuilder: (context, index) {
-                  return MessageBubbleWidget(
-                    message: ChatMessageModel(
-                      id: "51423",
-                      chatRoomId: '8273564',
-                      senderId: '873465',
-                      receiverId: "92875",
-                      content: "Hello this is my first message",
-                      type: MessageType.text,
-                      status: MessageStatus.sent,
-                      timestamp: Timestamp.now(),
-                      readBy: [],
-                    ),
-                    isMe: true,
-                  );
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.verticalPadding),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.emoji_emotions, color: AppColor.primaryColor),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.more_vert),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: BlocBuilder<ChatCubit, ChatState>(
+          bloc: chatController.chatCubit,
+          builder: (context, state) {
+            if (state.status == ChatStatus.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.status == ChatStatus.error) {
+              return Center(child: Text(state.error ?? 'Something went wrong'));
+            }
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    reverse: true,
+                    itemCount: state.messages.length,
+                    itemBuilder: (context, index) {
+                      final message = state.messages[index];
+                      final isMe = message.senderId == chatController.chatCubit.currentUserId;
+                      return MessageBubbleWidget(
+                        message: message,
+                        isMe: isMe,
+                      );
+                    },
                   ),
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      keyboardType: TextInputType.multiline,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        fillColor: Colors.grey[200],
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.send),
-                          onPressed: _handleSendMessage,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.verticalPadding),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.emoji_emotions, color: AppColor.primaryColor),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: chatController.messageController,
+                          keyboardType: TextInputType.multiline,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            hintText: 'Type a message...',
+                            fillColor: Colors.grey[200],
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.send),
+                              onPressed: () => chatController.handleSendMessage(widget.receiverId),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          ],
-        )
-      ),
+                ),
+              ],
+            );
+          }
+        ),
+      )
     );
   }
 }

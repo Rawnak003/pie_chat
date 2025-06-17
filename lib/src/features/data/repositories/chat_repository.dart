@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:piechat/src/features/data/models/chat_room_model.dart';
 import 'package:piechat/src/features/data/services/base_repository.dart';
 
@@ -77,5 +78,81 @@ class ChatRepository extends BaseRepository {
       "lastMessageTime": message.timestamp,
     });
     await batch.commit();
+  }
+
+  Stream<List<ChatMessageModel>> getMessages(
+    String chatRoomId, {
+    DocumentSnapshot? lastDocument,
+  }) {
+    var query = getChatRoomMessages(
+      chatRoomId,
+    ).orderBy('timestamp', descending: true).limit(20);
+    if (lastDocument != null) {
+      query = query.startAfterDocument(lastDocument);
+    }
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => ChatMessageModel.fromFirestore(doc))
+          .toList();
+    });
+  }
+
+  Future<List<ChatMessageModel>> getMoreMessages(
+    String chatRoomId, {
+    required DocumentSnapshot lastDocument,
+  }) async {
+    final query = getChatRoomMessages(chatRoomId)
+        .orderBy('timestamp', descending: true)
+        .startAfterDocument(lastDocument)
+        .limit(20);
+    final snapshot = await query.get();
+    return snapshot.docs
+        .map((doc) => ChatMessageModel.fromFirestore(doc))
+        .toList();
+  }
+
+  Stream<List<ChatRoomModel>> getChatRooms(String userId) {
+    return chatRooms
+        .where('participants', arrayContains: userId)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => ChatRoomModel.fromFirestore(doc))
+              .toList();
+        });
+  }
+
+  Stream<int> getUnreadCount(String chatRoomId, String userId) {
+    return getChatRoomMessages(chatRoomId)
+        .where('receiverId', isEqualTo: userId)
+        .where('status', isEqualTo: MessageStatus.sent.toString())
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  Future<void> markMessagesAsRead(String chatRoomId, String userId) async {
+    try {
+      final batch = firestore.batch();
+
+      final unreadMessages = await getChatRoomMessages(chatRoomId)
+          .where(
+        "receiverId",
+        isEqualTo: userId,
+      )
+          .where('status', isEqualTo: MessageStatus.sent.toString())
+          .get();
+      for (final doc in unreadMessages.docs) {
+        batch.update(doc.reference, {
+          'readBy': FieldValue.arrayUnion([userId]),
+          'status': MessageStatus.read.toString(),
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+    }
   }
 }

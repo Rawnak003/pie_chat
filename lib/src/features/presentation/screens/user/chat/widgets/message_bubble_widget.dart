@@ -49,7 +49,7 @@ class MessageBubbleWidget extends StatelessWidget {
                 ),
                 Icon(
                   Icons.done_all,
-                  color: message.status == MessageStatus.read ? AppColor.blueColor : AppColor.transparentColor,
+                  color: message.status == MessageStatus.read ? isMe ? AppColor.blueColor : AppColor.transparentColor : isMe ? Colors.white : AppColor.transparentColor,
                   size: 16,
                 ),
               ],

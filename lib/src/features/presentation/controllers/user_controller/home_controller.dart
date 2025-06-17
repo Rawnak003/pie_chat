@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:piechat/src/core/routes/route_names.dart';
+import 'package:piechat/src/core/routes/router.dart';
 import 'package:piechat/src/core/utils/constants/colors.dart';
-
-import '../../../../core/routes/route_names.dart';
-import '../../../../core/routes/router.dart';
-import '../../../data/repositories/contact_repository.dart';
-import '../../../data/services/service_locator.dart';
-import '../../../logic/cubits/auth/auth_cubit.dart';
+import 'package:piechat/src/features/data/repositories/auth_repository.dart';
+import 'package:piechat/src/features/data/repositories/chat_repository.dart';
+import 'package:piechat/src/features/data/repositories/contact_repository.dart';
+import 'package:piechat/src/features/data/services/service_locator.dart';
+import 'package:piechat/src/features/logic/cubits/auth/auth_cubit.dart';
 
 class HomeController {
   final ContactRepository _contactRepository = getIt<ContactRepository>();
+  final ChatRepository chatRepository = getIt<ChatRepository>();
+  final String userId = getIt<AuthRepository>().currentUser!.uid;
 
   Future<void> onTapLogout(BuildContext context) async {
     await getIt<AuthCubit>().signOut();
@@ -54,7 +57,7 @@ class HomeController {
                             child: Text(contact["name"][0].toUpperCase()),
                           ),
                           title: Text(contact["name"]),
-                          onTap: () => _navigateToChatScreen(context, contact["id"], contact["name"]),
+                          onTap: () => navigateToChatScreen(context, contact["id"], contact["name"]),
                         );
                       },
                     );
@@ -68,7 +71,7 @@ class HomeController {
     );
   }
 
-  void _navigateToChatScreen(BuildContext context, String receiverId, String receiverName) {
+  void navigateToChatScreen(BuildContext context, String receiverId, String receiverName) {
     getIt<AppRouter>().pushNamed(
       RoutesName.chatMessage,
       arguments: {
